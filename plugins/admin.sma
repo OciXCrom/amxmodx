@@ -561,41 +561,41 @@ getAccess(id, name[], authid[], ip[], password[])
 	new index = -1
 	new result = 0
 	
-	static Count;
-	static Flags;
-	static Access;
-	static AuthData[44];
-	static Password[32];
+	static count;
+	static flags;
+	static access;
+	static authdata[44];
+	static password[32];
 	
 	g_case_sensitive_name[id] = false;
 
-	Count = admins_num();
-	for (new i = 0; i < Count; ++i)
+	count = admins_num();
+	for (new i = 0; i < count; ++i)
 	{
-		Flags = admins_lookup(i, AdminProp_Flags);
-		admins_lookup(i, AdminProp_Auth, AuthData, charsmax(AuthData));
+		flags = admins_lookup(i, AdminProp_Flags);
+		admins_lookup(i, AdminProp_Auth, authdata, charsmax(authdata));
 		
-		if (Flags & FLAG_AUTHID)
+		if (flags & FLAG_AUTHID)
 		{
-			if (equal(authid, AuthData))
+			if (equal(authid, authdata))
 			{
 				index = i
 				break
 			}
 		}
-		else if (Flags & FLAG_IP)
+		else if (flags & FLAG_IP)
 		{
-			new c = strlen(AuthData)
+			new c = strlen(authdata)
 			
-			if (AuthData[c - 1] == '.')		/* check if this is not a xxx.xxx. format */
+			if (authdata[c - 1] == '.')		/* check if this is not a xxx.xxx. format */
 			{
-				if (equal(AuthData, ip, c))
+				if (equal(authdata, ip, c))
 				{
 					index = i
 					break
 				}
 			}									/* in other case an IP must just match */
-			else if (equal(ip, AuthData))
+			else if (equal(ip, authdata))
 			{
 				index = i
 				break
@@ -603,18 +603,18 @@ getAccess(id, name[], authid[], ip[], password[])
 		} 
 		else 
 		{
-			if (Flags & FLAG_CASE_SENSITIVE)
+			if (flags & FLAG_CASE_SENSITIVE)
 			{
-				if (Flags & FLAG_TAG)
+				if (flags & FLAG_TAG)
 				{
-					if (contain(name, AuthData) != -1)
+					if (contain(name, authdata) != -1)
 					{
 						index = i
 						g_case_sensitive_name[id] = true
 						break
 					}
 				}
-				else if (equal(name, AuthData))
+				else if (equal(name, authdata))
 				{
 					index = i
 					g_case_sensitive_name[id] = true
@@ -623,15 +623,15 @@ getAccess(id, name[], authid[], ip[], password[])
 			}
 			else
 			{
-				if (Flags & FLAG_TAG)
+				if (flags & FLAG_TAG)
 				{
-					if (containi(name, AuthData) != -1)
+					if (containi(name, authdata) != -1)
 					{
 						index = i
 						break
 					}
 				}
-				else if (equali(name, AuthData))
+				else if (equali(name, authdata))
 				{
 					index = i
 					break
@@ -642,41 +642,41 @@ getAccess(id, name[], authid[], ip[], password[])
 
 	if (index != -1)
 	{
-		Access = admins_lookup(index, AdminProp_Access);
+		access = admins_lookup(index, AdminProp_Access);
 
-		if (Flags & FLAG_NOPASS)
+		if (flags & FLAG_NOPASS)
 		{
 			result |= 8
 			new sflags[32]
 			
-			get_flags(Access, sflags, charsmax(sflags))
-			set_user_flags(id, Access)
+			get_flags(access, sflags, charsmax(sflags))
+			set_user_flags(id, access)
 			
-			log_amx("Login: ^"%s<%d><%s><>^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, AuthData, sflags, ip)
+			log_amx("Login: ^"%s<%d><%s><>^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, authdata, sflags, ip)
 		}
 		else 
 		{
 		
-			admins_lookup(index, AdminProp_Password, Password, charsmax(Password));
+			admins_lookup(index, AdminProp_Password, password, charsmax(password));
 
-			if (equal(password, Password))
+			if (equal(password, password))
 			{
 				result |= 12
-				set_user_flags(id, Access)
+				set_user_flags(id, access)
 				
 				new sflags[32]
-				get_flags(Access, sflags, charsmax(sflags))
+				get_flags(access, sflags, charsmax(sflags))
 				
-				log_amx("Login: ^"%s<%d><%s><>^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, AuthData, sflags, ip)
+				log_amx("Login: ^"%s<%d><%s><>^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, authdata, sflags, ip)
 			} 
 			else 
 			{
 				result |= 1
 				
-				if (Flags & FLAG_KICK)
+				if (flags & FLAG_KICK)
 				{
 					result |= 2
-					log_amx("Login: ^"%s<%d><%s><>^" kicked due to invalid password (account ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, AuthData, ip)
+					log_amx("Login: ^"%s<%d><%s><>^" kicked due to invalid password (account ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, authdata, ip)
 				}
 			}
 		}
