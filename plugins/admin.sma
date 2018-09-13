@@ -48,9 +48,9 @@ public plugin_init()
 #endif
 	register_dictionary("admin.txt")
 	register_dictionary("common.txt")
-	amx_mode=register_cvar("amx_mode", "1", FCVAR_PROTECTED)
-	amx_password_field=register_cvar("amx_password_field", "_pw", FCVAR_PROTECTED)
-	amx_default_access=register_cvar("amx_default_access", "", FCVAR_PROTECTED)
+	amx_mode = register_cvar("amx_mode", "1", FCVAR_PROTECTED)
+	amx_password_field = register_cvar("amx_password_field", "_pw", FCVAR_PROTECTED)
+	amx_default_access = register_cvar("amx_default_access", "", FCVAR_PROTECTED)
 
 	register_cvar("amx_vote_ratio", "0.02")
 	register_cvar("amx_vote_time", "10")
@@ -146,7 +146,7 @@ public addadminfn(id, level, cid)
 			new _steamid[44]
 			static _players[MAX_PLAYERS], _num, _pv
 			get_players(_players, _num)
-			for (new _i=0; _i<_num; _i++)
+			for (new _i = 0; _i < _num; _i++)
 			{
 				_pv = _players[_i]
 				get_user_authid(_pv, _steamid, charsmax(_steamid))
@@ -311,7 +311,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 		// If we came here, steamid doesn't exist in users.ini. Add it.
 		new linetoadd[512]
 		
-		if (comment[0]==0)
+		if (comment[0] == 0)
 		{
 			formatex(linetoadd, charsmax(linetoadd), "^r^n^"%s^" ^"%s^" ^"%s^" ^"%s^"", auth, password, accessflags, flags)
 		}
@@ -354,7 +354,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 
 loadSettings(szFilename[])
 {
-	new File=fopen(szFilename,"r");
+	new File = fopen(szFilename,"r");
 	
 	if (File)
 	{
@@ -376,18 +376,18 @@ loadSettings(szFilename[])
 				continue;
 			}
 			
-			flags[0]=0;
-			access[0]=0;
-			authdata[0]=0;
-			password[0]=0;
+			flags[0] = 0;
+			access[0] = 0;
+			authdata[0] = 0;
+			password[0] = 0;
 			
 			// not enough parameters
-			if (parse(text,authdata,charsmax(authdata),password,charsmax(password),access,charsmax(access),flags,charsmax(flags)) < 2)
+			if (parse(text, authdata, charsmax(authdata), password, charsmax(password), access, charsmax(access), flags, charsmax(flags)) < 2)
 			{
 				continue;
 			}
 			
-			admins_push(authdata,password,read_flags(access),read_flags(flags));
+			admins_push(authdata, password, read_flags(access), read_flags(flags));
 
 			g_admin_count++;
 		}
@@ -476,7 +476,7 @@ public adminSql()
 			SQL_ReadResult(query, qcolAccess, access, charsmax(access));
 			SQL_ReadResult(query, qcolFlags, flags, charsmax(flags));
 	
-			admins_push(authdata,password,read_flags(access),read_flags(flags));
+			admins_push(authdata, password, read_flags(access), read_flags(flags));
 	
 			++g_admin_count;
 			SQL_NextRow(query)
@@ -546,7 +546,7 @@ public cmdReload(id, level, cid)
 	new players[MAX_PLAYERS], num, pv
 	new name[MAX_NAME_LENGTH]
 	get_players(players, num)
-	for (new i=0; i<num; i++)
+	for (new i = 0; i < num; i++)
 	{
 		pv = players[i]
 		get_user_name(pv, name, charsmax(name))
@@ -569,11 +569,11 @@ getAccess(id, name[], authid[], ip[], password[])
 	
 	g_case_sensitive_name[id] = false;
 
-	Count=admins_num();
+	Count = admins_num();
 	for (new i = 0; i < Count; ++i)
 	{
-		Flags=admins_lookup(i,AdminProp_Flags);
-		admins_lookup(i,AdminProp_Auth,AuthData,charsmax(AuthData));
+		Flags = admins_lookup(i, AdminProp_Flags);
+		admins_lookup(i, AdminProp_Auth, AuthData, charsmax(AuthData));
 		
 		if (Flags & FLAG_AUTHID)
 		{
@@ -642,7 +642,7 @@ getAccess(id, name[], authid[], ip[], password[])
 
 	if (index != -1)
 	{
-		Access=admins_lookup(index,AdminProp_Access);
+		Access = admins_lookup(index, AdminProp_Access);
 
 		if (Flags & FLAG_NOPASS)
 		{
@@ -657,7 +657,7 @@ getAccess(id, name[], authid[], ip[], password[])
 		else 
 		{
 		
-			admins_lookup(index,AdminProp_Password,Password,charsmax(Password));
+			admins_lookup(index, AdminProp_Password, Password, charsmax(Password));
 
 			if (equal(password, Password))
 			{
