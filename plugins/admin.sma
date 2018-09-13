@@ -26,11 +26,15 @@ new g_admin_count;
 
 new PLUGINNAME[] = "AMX Mod X"
 
-#define ADMIN_LOOKUP	(1<<0)
-#define ADMIN_NORMAL	(1<<1)
-#define ADMIN_STEAM		(1<<2)
-#define ADMIN_IPADDR	(1<<3)
-#define ADMIN_NAME		(1<<4)
+enum (<<= 1)
+{
+	ADMIN_NONE = 0,
+	ADMIN_LOOKUP = 1,
+	ADMIN_NORMAL,
+	ADMIN_STEAM,
+	ADMIN_IPADDR,
+	ADMIN_NAME,
+}
 
 new bool:g_case_sensitive_name[MAX_PLAYERS + 1];
 
