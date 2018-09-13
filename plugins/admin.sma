@@ -38,9 +38,9 @@ enum (<<= 1)
 
 new bool:g_case_sensitive_name[MAX_PLAYERS + 1];
 
-new amx_mode;
-new amx_password_field;
-new amx_default_access;
+new g_amx_mode;
+new g_amx_password_field[10];
+new g_amx_default_access[32];
 
 public plugin_init()
 {
@@ -53,32 +53,32 @@ public plugin_init()
 	register_dictionary("admin.txt");
 	register_dictionary("common.txt");
 
-	amx_mode = register_cvar("amx_mode", "1", FCVAR_PROTECTED);
-	amx_password_field = register_cvar("amx_password_field", "_pw", FCVAR_PROTECTED);
-	amx_default_access = register_cvar("amx_default_access", "", FCVAR_PROTECTED);
+	bind_pcvar_num(create_cvar(   "amx_mode",           "1",   FCVAR_PROTECTED, "Mode of logging to the server",       true, 0.0, true, 2.0), g_amx_mode);
+	bind_pcvar_string(create_cvar("amx_password_field", "_pw", FCVAR_PROTECTED, "Name of setinfo which should store a password on a client"), g_amx_password_field, charsmax(g_amx_password_field));
+	bind_pcvar_string(create_cvar("amx_default_access", "",    FCVAR_PROTECTED, "Default access for all non admin players"),                  g_amx_default_access, charsmax(g_amx_default_access));
 
-	register_cvar("amx_vote_ratio", "0.02");
-	register_cvar("amx_vote_time", "10");
-	register_cvar("amx_vote_answers", "1");
-	register_cvar("amx_vote_delay", "60");
-	register_cvar("amx_last_voting", "0");
-	register_cvar("amx_show_activity", "2", FCVAR_PROTECTED);
-	register_cvar("amx_votekick_ratio", "0.40");
-	register_cvar("amx_voteban_ratio", "0.40");
-	register_cvar("amx_votemap_ratio", "0.40");
+	create_cvar("amx_vote_ratio", "0.02");
+	create_cvar("amx_vote_time", "10");
+	create_cvar("amx_vote_answers", "1");
+	create_cvar("amx_vote_delay", "60");
+	create_cvar("amx_last_voting", "0");
+	create_cvar("amx_show_activity", "2", FCVAR_PROTECTED, _, true, 0.0, true, 5.0);
+	create_cvar("amx_votekick_ratio", "0.40");
+	create_cvar("amx_voteban_ratio", "0.40");
+	create_cvar("amx_votemap_ratio", "0.40");
 
 	set_cvar_float("amx_last_voting", 0.0);
 
 #if defined USING_SQL
 	register_srvcmd("amx_sqladmins", "adminSql");
-	register_cvar("amx_sql_table", "admins", FCVAR_PROTECTED);
+	create_cvar("amx_sql_table", "admins", FCVAR_PROTECTED);
 #endif
-	register_cvar("amx_sql_host", "127.0.0.1", FCVAR_PROTECTED);
-	register_cvar("amx_sql_user", "root", FCVAR_PROTECTED);
-	register_cvar("amx_sql_pass", "", FCVAR_PROTECTED);
-	register_cvar("amx_sql_db", "amx", FCVAR_PROTECTED);
-	register_cvar("amx_sql_type", "mysql", FCVAR_PROTECTED);
-	register_cvar("amx_sql_timeout", "60", FCVAR_PROTECTED);
+	create_cvar("amx_sql_host", "127.0.0.1", FCVAR_PROTECTED);
+	create_cvar("amx_sql_user", "root", FCVAR_PROTECTED);
+	create_cvar("amx_sql_pass", "", FCVAR_PROTECTED);
+	create_cvar("amx_sql_db", "amx", FCVAR_PROTECTED);
+	create_cvar("amx_sql_type", "mysql", FCVAR_PROTECTED);
+	create_cvar("amx_sql_timeout", "60", FCVAR_PROTECTED);
 
 	register_concmd("amx_reloadadmins", "cmdReload", ADMIN_CFG);
 	register_concmd("amx_addadmin", "addadminfn", ADMIN_RCON, "<playername|auth> <accessflags> [password] [authtype] - add specified player as an admin to users.ini");
@@ -717,14 +717,14 @@ getAccess(id, name[], authid[], ip[], pwd[])
 			}
 		}
 	}
-	else if (get_pcvar_float(amx_mode) == 2.0)
+	else if (g_amx_mode == 2.0)
 	{
 		result |= 2;
 	} 
 	else 
 	{
 		new defaccess[32];
-		get_pcvar_string(amx_default_access, defaccess, charsmax(defaccess));
+		copy(defaccess, charsmax(defaccess), g_amx_default_access);
 		
 		if (!strlen(defaccess))
 		{
@@ -747,7 +747,7 @@ accessUser(id, name[] = "")
 {
 	remove_user_flags(id);
 	
-	new userip[32], userauthid[32], password[32], passfield[32], username[MAX_NAME_LENGTH];
+	new userip[32], userauthid[32], password[32], username[MAX_NAME_LENGTH];
 	get_user_ip(id, userip, charsmax(userip), 1);
 	get_user_authid(id, userauthid, charsmax(userauthid));
 	
@@ -760,8 +760,7 @@ accessUser(id, name[] = "")
 		get_user_name(id, username, charsmax(username));
 	}
 	
-	get_pcvar_string(amx_password_field, passfield, charsmax(passfield));
-	get_user_info(id, passfield, password, charsmax(password));
+	get_user_info(id, g_amx_password_field, password, charsmax(password));
 	
 	new result = getAccess(id, username, userauthid, userip, password);
 	
@@ -791,7 +790,7 @@ accessUser(id, name[] = "")
 
 public client_infochanged(id)
 {
-	if (!is_user_connected(id) || !get_pcvar_num(amx_mode))
+	if (!is_user_connected(id) || !g_amx_mode)
 	{
 		return PLUGIN_CONTINUE;
 	}
@@ -820,14 +819,14 @@ public client_infochanged(id)
 
 public client_authorized(id)
 {
-	return get_pcvar_num(amx_mode) ? accessUser(id) : PLUGIN_CONTINUE;
+	return g_amx_mode ? accessUser(id) : PLUGIN_CONTINUE;
 }
 
 public client_putinserver(id)
 {
 	if (!is_dedicated_server() && id == 1)
 	{
-		return get_pcvar_num(amx_mode) ? accessUser(id) : PLUGIN_CONTINUE;
+		return g_amx_mode ? accessUser(id) : PLUGIN_CONTINUE;
 	}
 	
 	return PLUGIN_CONTINUE;
