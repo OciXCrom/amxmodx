@@ -22,7 +22,7 @@
 
 //new Vector:AdminList;
 
-new AdminCount;
+new g_admin_count;
 
 new PLUGINNAME[] = "AMX Mod X"
 
@@ -32,7 +32,7 @@ new PLUGINNAME[] = "AMX Mod X"
 #define ADMIN_IPADDR	(1<<3)
 #define ADMIN_NAME		(1<<4)
 
-new bool:g_CaseSensitiveName[MAX_PLAYERS + 1];
+new bool:g_case_sensitive_name[MAX_PLAYERS + 1];
 
 // pcvars
 new amx_mode;
@@ -98,7 +98,7 @@ public plugin_init()
 }
 public client_connect(id)
 {
-	g_CaseSensitiveName[id] = false;
+	g_case_sensitive_name[id] = false;
 }
 public addadminfn(id, level, cid)
 {
@@ -216,10 +216,10 @@ public addadminfn(id, level, cid)
 	}
 
 	new auth[33]
-	new Comment[MAX_NAME_LENGTH]; // name of player to pass to comment field
+	new comment[MAX_NAME_LENGTH]; // name of player to pass to comment field
 	if (idtype & ADMIN_LOOKUP)
 	{
-		get_user_name(player, Comment, charsmax(Comment))
+		get_user_name(player, comment, charsmax(comment))
 		if (idtype & ADMIN_STEAM)
 		{
 			get_user_authid(player, auth, charsmax(auth))
@@ -248,7 +248,7 @@ public addadminfn(id, level, cid)
 	else
 		len += format(type[len], charsmax(type) - len, "e")
 	
-	AddAdmin(id, auth, flags, password, type, Comment)
+	AddAdmin(id, auth, flags, password, type, comment)
 	cmdReload(id, ADMIN_CFG, 0)
 
 	if (player > 0)
@@ -358,50 +358,50 @@ loadSettings(szFilename[])
 	
 	if (File)
 	{
-		new Text[512];
-		new Flags[32];
-		new Access[32]
-		new AuthData[44];
-		new Password[32];
+		new text[512];
+		new flags[32];
+		new access[32]
+		new authdata[44];
+		new password[32];
 		
 		while (!feof(File))
 		{
-			fgets(File, Text, charsmax(Text));
+			fgets(File, text, charsmax(text));
 			
-			trim(Text);
+			trim(text);
 			
 			// comment
-			if (Text[0]==';') 
+			if (text[0]==';') 
 			{
 				continue;
 			}
 			
-			Flags[0]=0;
-			Access[0]=0;
-			AuthData[0]=0;
-			Password[0]=0;
+			flags[0]=0;
+			access[0]=0;
+			authdata[0]=0;
+			password[0]=0;
 			
 			// not enough parameters
-			if (parse(Text,AuthData,charsmax(AuthData),Password,charsmax(Password),Access,charsmax(Access),Flags,charsmax(Flags)) < 2)
+			if (parse(text,authdata,charsmax(authdata),password,charsmax(password),access,charsmax(access),flags,charsmax(flags)) < 2)
 			{
 				continue;
 			}
 			
-			admins_push(AuthData,Password,read_flags(Access),read_flags(Flags));
+			admins_push(authdata,password,read_flags(access),read_flags(flags));
 
-			AdminCount++;
+			g_admin_count++;
 		}
 		
 		fclose(File);
 	}
 
-	if (AdminCount == 1)
+	if (g_admin_count == 1)
 	{
 		server_print("[AMXX] %L", LANG_SERVER, "LOADED_ADMIN");
 	}
 	else
 	{
-		server_print("[AMXX] %L", LANG_SERVER, "LOADED_ADMINS", AdminCount);
+		server_print("[AMXX] %L", LANG_SERVER, "LOADED_ADMINS", g_admin_count);
 	}
 	
 	return 1;
@@ -456,7 +456,7 @@ public adminSql()
 		server_print("[AMXX] %L", LANG_SERVER, "NO_ADMINS")
 	} else {
 		
-		AdminCount = 0
+		g_admin_count = 0
 		
 		/** do this incase people change the query order and forget to modify below */
 		new qcolAuth = SQL_FieldNameToNum(query, "auth")
@@ -464,31 +464,31 @@ public adminSql()
 		new qcolAccess = SQL_FieldNameToNum(query, "access")
 		new qcolFlags = SQL_FieldNameToNum(query, "flags")
 		
-		new AuthData[44];
-		new Password[44];
-		new Access[32];
-		new Flags[32];
+		new authdata[44];
+		new password[44];
+		new access[32];
+		new flags[32];
 		
 		while (SQL_MoreResults(query))
 		{
-			SQL_ReadResult(query, qcolAuth, AuthData, charsmax(AuthData));
-			SQL_ReadResult(query, qcolPass, Password, charsmax(Password));
-			SQL_ReadResult(query, qcolAccess, Access, charsmax(Access));
-			SQL_ReadResult(query, qcolFlags, Flags, charsmax(Flags));
+			SQL_ReadResult(query, qcolAuth, authdata, charsmax(authdata));
+			SQL_ReadResult(query, qcolPass, password, charsmax(password));
+			SQL_ReadResult(query, qcolAccess, access, charsmax(access));
+			SQL_ReadResult(query, qcolFlags, flags, charsmax(flags));
 	
-			admins_push(AuthData,Password,read_flags(Access),read_flags(Flags));
+			admins_push(authdata,password,read_flags(access),read_flags(flags));
 	
-			++AdminCount;
+			++g_admin_count;
 			SQL_NextRow(query)
 		}
 	
-		if (AdminCount == 1)
+		if (g_admin_count == 1)
 		{
 			server_print("[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMIN")
 		}
 		else
 		{
-			server_print("[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMINS", AdminCount)
+			server_print("[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMINS", g_admin_count)
 		}
 		
 		SQL_FreeHandle(query)
@@ -516,30 +516,30 @@ public cmdReload(id, level, cid)
 	get_configsdir(filename, charsmax(filename))
 	format(filename, charsmax(filename), "%s/users.ini", filename)
 
-	AdminCount = 0;
+	g_admin_count = 0;
 	loadSettings(filename);		// Re-Load admins accounts
 
 	if (id != 0)
 	{
-		if (AdminCount == 1)
+		if (g_admin_count == 1)
 		{
 			console_print(id, "[AMXX] %L", LANG_SERVER, "LOADED_ADMIN");
 		}
 		else
 		{
-			console_print(id, "[AMXX] %L", LANG_SERVER, "LOADED_ADMINS", AdminCount);
+			console_print(id, "[AMXX] %L", LANG_SERVER, "LOADED_ADMINS", g_admin_count);
 		}
 	}
 #else
-	AdminCount = 0
+	g_admin_count = 0
 	adminSql()
 
 	if (id != 0)
 	{
-		if (AdminCount == 1)
+		if (g_admin_count == 1)
 			console_print(id, "[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMIN")
 		else
-			console_print(id, "[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMINS", AdminCount)
+			console_print(id, "[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMINS", g_admin_count)
 	}
 #endif
 
@@ -567,7 +567,7 @@ getAccess(id, name[], authid[], ip[], password[])
 	static AuthData[44];
 	static Password[32];
 	
-	g_CaseSensitiveName[id] = false;
+	g_case_sensitive_name[id] = false;
 
 	Count=admins_num();
 	for (new i = 0; i < Count; ++i)
@@ -610,14 +610,14 @@ getAccess(id, name[], authid[], ip[], password[])
 					if (contain(name, AuthData) != -1)
 					{
 						index = i
-						g_CaseSensitiveName[id] = true
+						g_case_sensitive_name[id] = true
 						break
 					}
 				}
 				else if (equal(name, AuthData))
 				{
 					index = i
-					g_CaseSensitiveName[id] = true
+					g_case_sensitive_name[id] = true
 					break
 				}
 			}
@@ -767,7 +767,7 @@ public client_infochanged(id)
 	get_user_name(id, oldname, charsmax(oldname))
 	get_user_info(id, "name", newname, charsmax(newname))
 
-	if (g_CaseSensitiveName[id])
+	if (g_case_sensitive_name[id])
 	{
 		if (!equal(newname, oldname))
 		{
