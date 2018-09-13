@@ -556,7 +556,7 @@ public cmdReload(id, level, cid)
 	return PLUGIN_HANDLED
 }
 
-getAccess(id, name[], authid[], ip[], password[])
+getAccess(id, name[], authid[], ip[], pwd[])
 {
 	new index = -1
 	new result = 0
@@ -659,7 +659,7 @@ getAccess(id, name[], authid[], ip[], password[])
 		
 			admins_lookup(index, AdminProp_Password, password, charsmax(password));
 
-			if (equal(password, password))
+			if (equal(pwd, password))
 			{
 				result |= 12
 				set_user_flags(id, access)
