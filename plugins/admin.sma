@@ -91,8 +91,7 @@ public plugin_init()
 #if defined USING_SQL
 	server_cmd("amx_sqladmins");
 #else
-	format(configsDir, 63, "%s/users.ini", configsDir);
-	loadSettings(configsDir);					// Load admins accounts
+	loadSettings(fmt("%s/users.ini", configsDir));					// Load admins accounts
 #endif
 }
 
@@ -112,7 +111,7 @@ public cmdAddAdmin(id, level, cid)
 
 	if (read_argc() >= 5)
 	{
-		new t_arg[16];
+		new t_arg[8];
 		read_argv(4, t_arg, charsmax(t_arg));
 		
 		if (equali(t_arg, "steam") || equali(t_arg, "steamid") || equali(t_arg, "auth"))
@@ -139,9 +138,8 @@ public cmdAddAdmin(id, level, cid)
 		}
 	}
 
-	new arg[33];
+	new arg[32], player = -1;
 	read_argv(1, arg, charsmax(arg));
-	new player = -1;
 	
 	if (idtype & ADMIN_STEAM)
 	{
@@ -152,29 +150,28 @@ public cmdAddAdmin(id, level, cid)
 		}
 		else
 		{
-			new _steamid[44];
-			static _players[MAX_PLAYERS], _num, _pv;
-			get_players(_players, _num);
+			new players[MAX_PLAYERS], steamid[32], pnum;
+			get_players(players, pnum);
 
-			for (new _i = 0; _i < _num; _i++)
+			for (new plr, i; i < pnum; i++)
 			{
-				_pv = _players[_i];
-				get_user_authid(_pv, _steamid, charsmax(_steamid));
+				plr = players[i];
+				get_user_authid(plr, steamid, charsmax(steamid));
 
-				if (!_steamid[0])
+				if (!steamid[0])
 				{
 					continue;
 				}
-				if (equal(_steamid, arg))
+				if (equal(steamid, arg))
 				{
-					player = _pv;
+					player = plr;
 					break;
 				}
 			}	
 			if (player < 1)
 			{
 				idtype &= ~ADMIN_LOOKUP;
-			}		
+			}
 		}
 	}
 	else if (idtype & ADMIN_NAME)
@@ -193,9 +190,8 @@ public cmdAddAdmin(id, level, cid)
 	else if (idtype & ADMIN_IPADDR)
 	{
 		new len = strlen(arg);
-		new dots, chars;
 		
-		for (new i = 0; i < len; i++)
+		for (new dots, chars, i; i < len; i++)
 		{
 			if (arg[i] == '.')
 			{
@@ -219,7 +215,7 @@ public cmdAddAdmin(id, level, cid)
 			if (dots != 3 || !chars || chars > 3)
 			{
 				idtype |= ADMIN_LOOKUP;
-				player = find_player("dh", arg);
+				player = find_player_ex(FindPlayer_MatchIP | FindPlayer_ExcludeBots, arg);
 			}
 		}
 	}
@@ -238,7 +234,7 @@ public cmdAddAdmin(id, level, cid)
 		read_argv(3, password, charsmax(password));
 	}
 
-	new auth[33];
+	new auth[32];
 	new comment[MAX_NAME_LENGTH]; // name of player to pass to comment field
 
 	if (idtype & ADMIN_LOOKUP)
@@ -312,7 +308,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 		// Make sure that the users.ini file exists.
 		new configsDir[64];
 		get_configsdir(configsDir, charsmax(configsDir));
-		format(configsDir, charsmax(configsDir), "%s/users.ini", configsDir);
+		add(configsDir, charsmax(configsDir), "/users.ini");
 
 		if (!file_exists(configsDir))
 		{
@@ -321,9 +317,8 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 		}
 
 		// Make sure steamid isn't already in file.
-		new line = 0, textline[256], len;
-		const SIZE = 63;
-		new line_steamid[SIZE + 1], line_password[SIZE + 1], line_accessflags[SIZE + 1], line_flags[SIZE + 1], parsedParams;
+		new textline[256], line, len;
+		new line_steamid[64], line_password[64], line_accessflags[64], line_flags[64], parsedParams;
 		
 		// <name|ip|steamid> <password> <access flags> <account flags>
 		while ((line = read_file(configsDir, line, textline, charsmax(textline), len)))
@@ -333,7 +328,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 				continue; // comment line
 			}
 
-			parsedParams = parse(textline, line_steamid, SIZE, line_password, SIZE, line_accessflags, SIZE, line_flags, SIZE);
+			parsedParams = parse(textline, line_steamid, charsmax(line_steamid), line_password, charsmax(line_password), line_accessflags, charsmax(line_accessflags), line_flags, charsmax(line_flags));
 			
 			if (parsedParams != 4)
 			{
@@ -381,7 +376,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 	}
 	else if (SQL_NumResults(query))
 	{
-		console_print(id, "[%s] %s already exists!", PLUGINNAME, auth);
+		console_print(id, "[AMXX] %l", "ALREADY_EXIST", auth);
 	}
 	else
 	{
@@ -401,7 +396,7 @@ loadSettings(szFilename[])
 	
 	if (file)
 	{
-		new text[512], flags[32], access[32], authdata[44], password[32];
+		new text[512], flags[32], access[32], authdata[32], password[32];
 		
 		while (!feof(file))
 		{
@@ -504,7 +499,7 @@ public adminSql()
 		new qcolAccess = SQL_FieldNameToNum(query, "access");
 		new qcolFlags = SQL_FieldNameToNum(query, "flags");
 		
-		new authdata[44], password[44], access[32], flags[32];
+		new authdata[32], password[32], access[32], flags[32];
 		
 		while (SQL_MoreResults(query))
 		{
@@ -551,7 +546,7 @@ public cmdReload(id, level, cid)
 #if !defined USING_SQL
 	new filename[128];
 	get_configsdir(filename, charsmax(filename));
-	format(filename, charsmax(filename), "%s/users.ini", filename);
+	add(filename, charsmax(filename), "/users.ini");
 
 	g_admin_count = 0;
 	loadSettings(filename);		// Re-Load admins accounts
@@ -583,15 +578,15 @@ public cmdReload(id, level, cid)
 		}
 	}
 #endif
-	new players[MAX_PLAYERS], num, pv;
+	new players[MAX_PLAYERS], pnum, plr;
 	new name[MAX_NAME_LENGTH];
-	get_players(players, num);
+	get_players(players, pnum);
 
-	for (new i = 0; i < num; i++)
+	for (new i = 0; i < pnum; i++)
 	{
-		pv = players[i];
-		get_user_name(pv, name, charsmax(name));
-		accessUser(pv, name);
+		plr = players[i];
+		get_user_name(plr, name, charsmax(name));
+		accessUser(plr, name);
 	}
 
 	return PLUGIN_HANDLED;
@@ -602,7 +597,7 @@ getAccess(id, name[], authid[], ip[], pwd[])
 	new index = -1;
 	new result = 0;
 	
-	static authdata[44], password[32], count, flags, access;
+	static authdata[32], password[32], count, flags, access;
 	g_case_sensitive_name[id] = false;
 	count = admins_num();
 
