@@ -10,6 +10,13 @@ INV_PAS = Invalid Password!
 PAS_ACC = Password accepted
 PRIV_SET = Privileges set
 NO_ENTRY = You have no entry to the server...
+AMX_ADDADMIN_SYNTAX = <playername|auth> <accessflags> [password] [authtype] - add specified player as an admin to users.ini
+UNKNOWN_ID_TYPE = Unknown id type ^"%s^", use one of: steamid, ip, name
+FILE_NOT_EXIST = File ^"%s^" doesn't exist
+ALREADY_EXIST = %s already exists!
+ADDING = Adding:^n%s
+FAIL_WRITE = Failed writing to %s!
+ADDING_TO_DB = Adding to database
 
 [de]
 LOADED_ADMIN = 1 Admin aus der Datei geladen

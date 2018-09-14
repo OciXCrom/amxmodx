@@ -24,7 +24,6 @@
 #endif
 
 new g_admin_count;
-new PLUGINNAME[] = "AMX Mod X";
 
 enum (<<= 1)
 {
@@ -81,7 +80,7 @@ public plugin_init()
 	create_cvar("amx_sql_timeout", "60", FCVAR_PROTECTED);
 
 	register_concmd("amx_reloadadmins", "cmdReload", ADMIN_CFG);
-	register_concmd("amx_addadmin", "addadminfn", ADMIN_RCON, "<playername|auth> <accessflags> [password] [authtype] - add specified player as an admin to users.ini");
+	register_concmd("amx_addadmin", "cmdAddAdmin", ADMIN_RCON, "AMX_ADDADMIN_SYNTAX", .info_ml = true);
 
 	remove_user_flags(0, read_flags("z"));		// Remove 'user' flag from server rights
 
@@ -102,7 +101,7 @@ public client_connect(id)
 	g_case_sensitive_name[id] = false;
 }
 
-public addadminfn(id, level, cid)
+public cmdAddAdmin(id, level, cid)
 {
 	if (!cmd_access(id, level, cid, 3))
 	{
@@ -135,7 +134,7 @@ public addadminfn(id, level, cid)
 		}
 		else
 		{
-			console_print(id, "[%s] Unknown id type ^"%s^", use one of: steamid, ip, name", PLUGINNAME, t_arg);
+			console_print(id, "[AMXX] %l", "UNKNOWN_ID_TYPE", t_arg);
 			return PLUGIN_HANDLED;
 		}
 	}
@@ -227,7 +226,7 @@ public addadminfn(id, level, cid)
 	
 	if (idtype & ADMIN_LOOKUP && !player)
 	{
-		console_print(id, "%L", id, "CL_NOT_FOUND");
+		console_print(id, "%l", "CL_NOT_FOUND");
 		return PLUGIN_HANDLED;
 	}
 	
@@ -317,7 +316,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 
 		if (!file_exists(configsDir))
 		{
-			console_print(id, "[%s] File ^"%s^" doesn't exist.", PLUGINNAME, configsDir);
+			console_print(id, "[AMXX] %l", "FILE_NOT_EXIST", configsDir);
 			return;
 		}
 
@@ -343,7 +342,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 			
 			if (containi(line_flags, flags) != -1 && equal(line_steamid, auth))
 			{
-				console_print(id, "[%s] %s already exists!", PLUGINNAME, auth);
+				console_print(id, "[AMXX] %l", "ALREADY_EXIST", auth);
 				return;
 			}
 		}
@@ -360,11 +359,11 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 			formatex(linetoadd, charsmax(linetoadd), "^r^n^"%s^" ^"%s^" ^"%s^" ^"%s^" ; %s", auth, password, accessflags, flags, comment);
 		}
 
-		console_print(id, "Adding:^n%s", linetoadd);
+		console_print(id, "%l", "ADDING", linetoadd);
 
 		if (!write_file(configsDir, linetoadd))
 		{
-			console_print(id, "[%s] Failed writing to %s!", PLUGINNAME, configsDir);
+			console_print(id, "[AMXX] %l", "FAIL_WRITE", configsDir);
 		}
 #if defined USING_SQL
 	}
@@ -386,7 +385,7 @@ AddAdmin(id, auth[], accessflags[], password[], flags[], comment[]="")
 	}
 	else
 	{
-		console_print(id, "Adding to database:^n^"%s^" ^"%s^" ^"%s^" ^"%s^"", auth, password, accessflags, flags);
+		console_print(id, "%l:^n^"%s^" ^"%s^" ^"%s^" ^"%s^"", "ADDING_TO_DB", auth, password, accessflags, flags);
 		SQL_QueryAndIgnore(sql, "REPLACE INTO `%s` (`auth`, `password`, `access`, `flags`) VALUES ('%s', '%s', '%s', '%s')", table, auth, password, accessflags, flags);
 	}
 	
@@ -561,11 +560,11 @@ public cmdReload(id, level, cid)
 	{
 		if (g_admin_count == 1)
 		{
-			console_print(id, "[AMXX] %L", LANG_SERVER, "LOADED_ADMIN");
+			console_print(id, "[AMXX] %l", "LOADED_ADMIN");
 		}
 		else
 		{
-			console_print(id, "[AMXX] %L", LANG_SERVER, "LOADED_ADMINS", g_admin_count);
+			console_print(id, "[AMXX] %l", "LOADED_ADMINS", g_admin_count);
 		}
 	}
 #else
@@ -576,11 +575,11 @@ public cmdReload(id, level, cid)
 	{
 		if (g_admin_count == 1)
 		{
-			console_print(id, "[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMIN");
+			console_print(id, "[AMXX] %l", "SQL_LOADED_ADMIN");
 		}
 		else
 		{
-			console_print(id, "[AMXX] %L", LANG_SERVER, "SQL_LOADED_ADMINS", g_admin_count);
+			console_print(id, "[AMXX] %l", "SQL_LOADED_ADMINS", g_admin_count);
 		}
 	}
 #endif
@@ -689,7 +688,7 @@ getAccess(id, name[], authid[], ip[], pwd[])
 			get_flags(access, sflags, charsmax(sflags));
 			set_user_flags(id, access);
 			
-			log_amx("Login: ^"%s<%d><%s><>^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, authdata, sflags, ip);
+			log_amx("Login: ^"%N^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", id, authdata, sflags, ip);
 		}
 		else 
 		{
@@ -703,7 +702,7 @@ getAccess(id, name[], authid[], ip[], pwd[])
 				new sflags[32];
 				get_flags(access, sflags, charsmax(sflags));
 				
-				log_amx("Login: ^"%s<%d><%s><>^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, authdata, sflags, ip);
+				log_amx("Login: ^"%N^" became an admin (account ^"%s^") (access ^"%s^") (address ^"%s^")", id, authdata, sflags, ip);
 			} 
 			else 
 			{
@@ -712,7 +711,7 @@ getAccess(id, name[], authid[], ip[], pwd[])
 				if (flags & FLAG_KICK)
 				{
 					result |= 2;
-					log_amx("Login: ^"%s<%d><%s><>^" kicked due to invalid password (account ^"%s^") (address ^"%s^")", name, get_user_userid(id), authid, authdata, ip);
+					log_amx("Login: ^"%N^" kicked due to invalid password (account ^"%s^") (address ^"%s^")", id, authdata, ip);
 				}
 			}
 		}
@@ -766,7 +765,7 @@ accessUser(id, name[] = "")
 	
 	if (result & 1)
 	{
-		engclient_print(id, engprint_console, "* %L", id, "INV_PAS");
+		engclient_print(id, engprint_console, "* %l", "INV_PAS");
 	}
 	
 	if (result & 2)
@@ -777,12 +776,12 @@ accessUser(id, name[] = "")
 	
 	if (result & 4)
 	{
-		engclient_print(id, engprint_console, "* %L", id, "PAS_ACC");
+		engclient_print(id, engprint_console, "* %l", "PAS_ACC");
 	}
 	
 	if (result & 8)
 	{
-		engclient_print(id, engprint_console, "* %L", id, "PRIV_SET");
+		engclient_print(id, engprint_console, "* %l", "PRIV_SET");
 	}
 	
 	return PLUGIN_CONTINUE;
